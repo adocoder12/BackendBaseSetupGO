@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/adocoder12/BackendBaseSetupGO/internal/config"
+	"github.com/adocoder12/BackendBaseSetupGO/internal/db"
 	"github.com/adocoder12/BackendBaseSetupGO/internal/handlers"
 	"github.com/joho/godotenv"
 )
@@ -22,6 +24,28 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		logger.Warn("no .env file found")
 	}
+	//config load
+	config, err := config.Load()
+	if err != nil {
+		logger.Error("failed load config", "error", err)
+		os.Exit(1)
+
+	}
+	// db
+	pool, err := db.NewPool(config.Database)
+	if err != nil {
+		logger.Error("Failed to connect to database", "error", err)
+		os.Exit(1)
+	}
+	defer pool.Close()
+	logger.Info("database connection stablished!")
+
+	// Run migrations
+	if err := db.Migrate(config.Database); err != nil {
+		logger.Error("failed to run migrations", "error", err)
+		os.Exit(1)
+	}
+	logger.Info("database migrations verified")
 
 	app := handlers.NewApplication(logger)
 	router := app.SetupRoutes()
@@ -38,7 +62,7 @@ func main() {
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
-	logger.Info("Server running")
+	logger.Info(" Costa PMS API running on", "port", config.Server.Port)
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Error("server failed", "err", err)
 		os.Exit(1)
