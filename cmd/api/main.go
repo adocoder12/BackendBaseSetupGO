@@ -1,13 +1,13 @@
 package main
 
 import (
-	"Backend/internal/handlers"
 	"errors"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/adocoder12/BackendBaseSetupGO/internal/handlers"
 	"github.com/joho/godotenv"
 )
 
