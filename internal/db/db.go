@@ -17,7 +17,7 @@ const migrationsPath = "file://internal/db/migrations"
 
 // NewPool creates a pgxpool with explicit connection limits from config.
 // The caller is responsible for calling pool.Close() on shutdown.
-func NewPool(cfg config.DatabaseConfig) (*pgxpool.Pool, error) {
+func NewPool(ctx context.Context, cfg config.DatabaseConfig) (*pgxpool.Pool, error) {
 	poolConfig, err := pgxpool.ParseConfig(cfg.DSN())
 	if err != nil {
 		return nil, fmt.Errorf("db - parse config: %w", err)
@@ -27,8 +27,6 @@ func NewPool(cfg config.DatabaseConfig) (*pgxpool.Pool, error) {
 	poolConfig.MaxConnLifetime = 30 * time.Second   // Prevent memory leaks / stale connections
 	poolConfig.MaxConnIdleTime = 5 * time.Minute    // Terminate idle connections to free DB memory
 	poolConfig.HealthCheckPeriod = 30 * time.Second // Automatically prune dropped/broken sockets
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
